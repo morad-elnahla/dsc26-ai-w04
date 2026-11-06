@@ -1,13 +1,24 @@
-"""Arabic-aware normalisation and tokenisation. You write this file."""
+"""Arabic normalization and Unicode tokenization for Bayyina."""
+
 from __future__ import annotations
+
+import re
+
+_DELETE = dict.fromkeys([*(range(0x064B, 0x0653)), 0x0670, 0x0640])
+_FOLD = str.maketrans({
+    "أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا", "ى": "ي", "ة": "ه",
+    **{chr(0x0660 + i): str(i) for i in range(10)},
+    **{chr(0x06F0 + i): str(i) for i in range(10)},
+})
+_WORDS = re.compile(r"\w+", flags=re.UNICODE)
 
 
 def normalize_ar(text: str) -> str:
-    """Remove U+064B-U+0652 and U+0670; remove tatweel U+0640; map أ إ آ ٱ -> ا, ى -> ي, ة -> ه;
-    map ٠-٩ and ۰-۹ to 0-9; lowercase; collapse runs of whitespace to one space and strip."""
-    raise NotImplementedError
+    """Normalize only the code points specified by the DSC task."""
+    cleaned = text.translate(_DELETE).translate(_FOLD).lower()
+    return " ".join(cleaned.split())
 
 
 def tokenize(text: str) -> list[str]:
-    """normalize_ar, then every match of the regex \\w+ (Unicode)."""
-    raise NotImplementedError
+    """Tokenize normalized text, keeping mixed Latin/digit words intact."""
+    return _WORDS.findall(normalize_ar(text))
